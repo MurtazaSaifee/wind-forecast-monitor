@@ -84,36 +84,14 @@ docker-compose.yml, Makefile (dev, test, lint, ingest, gen-types), vercel.json
   - `docker build`.
 
   There are no pre-commit hooks.
-- **Workflow:** one ticket (`.scratch/`), one branch, one PR with a self-review description. Commits follow the Conventional Commits format.
-- **Repo:** public GitHub, with a random anonymous name. `.scratch/` is gitignored. No company name appears in committed files.
+- **Workflow:** Conventional Commits, trunk/PR branches, self-reviewed changes.
 
-## Build order
+## Build slices
 
-| # | Slice | Est. |
-|---|---|---|
-| 1 | Scaffold repo, uv/pnpm, Docker, Makefile, CI; create the public GitHub repo (ask first) | 1.5 h |
-| 2 | Ingestion CLI → `snapshot.duckdb` (recorded-fixture tests) | 2 h |
-| 3 | Domain core, test-first: selection, alignment, metrics, walk-forward band | 2.5 h |
-| 4 | API endpoints + contract tests + type generation | 1.5 h |
-| 5 | Decision view (use the `frontend-design` skill) | 2.5 h |
-| 6 | Accuracy view + methodology panel | 2 h |
-| 7 | Vercel deploy (GitHub integration: PR previews, `main` deploys to prod) + README | 1.5 h |
-| 8 | Video: script, record, upload (unlisted) | 1.5 h |
-| — | Buffer, then the optional heatmap and worst-days table | 1 h |
-
-## Deliverables checklist
-
-- [ ] Public GitHub repo with a random name
-- [x] README containing:
-  - [x] a pitch and screenshot
-  - [x] the live link
-  - [x] quick start (`docker compose up`, `make dev`)
-  - [x] a repo map
-  - [x] how it works, including assumptions and the sensitivity check
-  - [x] testing and CI
-  - [x] ADR links
-  - [x] **AI assistance** disclosure: *"Built with Claude Code (Anthropic) as an AI pair programmer for research, scaffolding, code and tests. I directed the design, reviewed every change, and own all decisions (see ADRs)."*
-- [ ] Deployed on Vercel. Open every link in incognito mode to check access.
-- [ ] Unlisted YouTube video, at most 10 minutes:
-  - Part 1: product pitch, at most 5 minutes.
-  - Part 2: technical walkthrough covering architecture, design, analysis, code base and practices, at most 5 minutes.
+1. Project scaffold (uv/pnpm, Docker, Makefile, CI)
+2. Ingestion CLI → `snapshot.duckdb` (recorded-fixture tests)
+3. Domain core, test-first: selection, alignment, metrics, walk-forward band
+4. API endpoints + contract tests + OpenAPI type generation
+5. Decision view
+6. Accuracy view + methodology panel + error heatmap + worst-days table
+7. Vercel deployment + README + hardening

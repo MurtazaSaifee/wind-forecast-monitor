@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.problems import register_problem_handlers
 from app.api.v1.router import api_router
 from app.core.logging import configure_logging
+from app.core.rate_limit import RateLimitMiddleware
 from app.core.request_context import RequestContextMiddleware
 from app.core.security_headers import SecurityHeadersMiddleware
 
@@ -22,6 +23,7 @@ def create_app(static_dir: Path | None = None) -> FastAPI:
         static_dir = Path(os.environ[STATIC_DIR_ENV])
 
     application = FastAPI(title="Wind Forecast Monitor API", version="0.1.0")
+    application.add_middleware(RateLimitMiddleware)
     application.add_middleware(RequestContextMiddleware)
     application.add_middleware(SecurityHeadersMiddleware)
     register_problem_handlers(application)

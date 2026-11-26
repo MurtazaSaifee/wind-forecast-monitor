@@ -1,12 +1,28 @@
 # Wind Forecast Monitor
 
+[![CI](https://github.com/MurtazaSaifee/wind-forecast-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/MurtazaSaifee/wind-forecast-monitor/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A UK utility's day-ahead purchasing desk decides, at the decision cutoff on the decision day, how much national wind to rely on for the next day's delivery. This app shows the **decision snapshot**, the wind outlook as the desk saw it at that cutoff, against actual generation. It measures how accurate those forecasts were over the delivery days 2 Jan to 1 Feb 2026, and it shows an **expected-error band** built only from errors the desk already knew at the cutoff.
+
+**Live app:** https://wind.murtazasaifee.com (Vercel Hobby, public)
 
 ![Decision view at the 09:20 cutoff for 1 Feb 2026](docs/screenshot-decision-view.png)
 
-**Live app:** https://xkvq7m.vercel.app (Vercel Hobby, public)
-
 The app has three views, all at the shared decision cutoff: **Decision** (one delivery day against its snapshot and band), **Accuracy** (headline metrics, band coverage, error histogram, error by horizon, error heatmap and worst days) and **Methodology** (how each figure is made, with the live alignment check).
+
+## Engineering highlights
+
+- **Leak-free walk-forward band:** computes each delivery day's P10/P90 expected-error band solely from decision-forecast errors over `D-15` to `D-2`, with tests asserting `D-1` and later days never leak into the band.
+- **Zero-cost snapshot architecture:** `make ingest` normalizes Elexon `FUELHH` and `WINDFOR` feeds into a committed read-only DuckDB snapshot (`data/snapshot.duckdb`) queried with `ASOF JOIN`, paired with `s-maxage=86400` CDN edge caching (`$0/mo` on Vercel Hobby).
+- **Hardened API & OpenAPI-typed UI:** pure ASGI request-ID logging, strict CSP/HSTS/framing headers in both FastAPI and `vercel.json`, bounded in-memory per-IP rate limiting on `/api/*`, RFC 7807 `application/problem+json` error responses, and TypeScript API types generated from OpenAPI.
+- **Alignment sensitivity verification:** `make sensitivity` cross-checks hourly-mean vs. top-of-hour alignment across all 744 target hours, confirming headline MAE moves by under 1%.
+
+### Accuracy & methodology views
+
+![Accuracy view showing error by horizon and error distribution at the 09:20 cutoff](docs/screenshot-accuracy-view.png)
+
+![Methodology view explaining data rules, cutoffs, and live alignment check](docs/screenshot-methodology-view.png)
 
 ## Quick start
 
@@ -47,6 +63,7 @@ backend/                       FastAPI app, ingestion CLI, domain logic, tests (
   app/main.py                  create_app(): mounts the API and, if set, the built frontend
   app/api/v1/                  endpoints: health, meta, decision-snapshot, accuracy
   app/api/problems.py          RFC 7807 problem responses for every route
+  app/core/                    config, JSON request logging, security headers, rate limiting
   app/domain/                  pure logic, no SQL or HTTP: decision (cutoff and selection),
                                alignment, kpis, accuracy, band, error_grid, horizon
   app/ingestion/               make ingest: fetch, validate, deduplicate, write the snapshot
@@ -63,10 +80,11 @@ frontend/                      React, TypeScript, Vite, TanStack Query, ECharts,
 data/snapshot.duckdb           the committed snapshot the API reads
 api/index.py                   the Vercel Python function that serves the API under /api
 Dockerfile, docker-compose.yml multi-stage image: builds the frontend, serves it with FastAPI
-vercel.json                    Vercel build settings and the /api rewrite
+vercel.json                    Vercel build settings, security headers, and the /api rewrite
 .github/workflows/ci.yml       CI: backend, frontend and Docker build jobs
-docs/                          plan, research notes, ADRs, agent workflow docs
+docs/                          plan, research notes, ADRs, UI screenshots
 GLOSSARY.md                    domain terms, used in code, tests and UI text
+LICENSE                        MIT License
 ```
 
 ## How it works
@@ -113,7 +131,7 @@ Both rules measure the same 744 hours. The choice of alignment moves MAE by unde
 
 ## Testing and CI
 
-`make test` runs 238 backend tests (pytest) and 136 frontend tests in 18 files (Vitest). `make lint` runs ruff, pyright, eslint and tsc.
+`make test` runs 256 backend tests (pytest) and 147 frontend tests in 18 files (Vitest). `make lint` runs ruff, pyright, eslint and tsc.
 
 What is tested:
 

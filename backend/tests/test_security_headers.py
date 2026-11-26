@@ -6,13 +6,15 @@ import httpx
 import pytest
 
 from app.core.config import SNAPSHOT_PATH_ENV
+from app.core.security_headers import CONTENT_SECURITY_POLICY
 from app.main import create_app
 
 EXPECTED_HEADERS = {
     "x-content-type-options": "nosniff",
     "referrer-policy": "strict-origin-when-cross-origin",
     "x-frame-options": "DENY",
-    "content-security-policy": "frame-ancestors 'none'",
+    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+    "content-security-policy": CONTENT_SECURITY_POLICY,
 }
 
 
